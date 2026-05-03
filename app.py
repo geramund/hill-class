@@ -187,6 +187,29 @@ st.set_page_config(
     layout="centered",
 )
 
+st.markdown("""
+<style>
+/* primary button */
+div.stButton > button[kind="primary"] {
+    background-color: #555555 !important;
+    border-color: #555555 !important;
+    color: #ffffff !important;
+}
+div.stButton > button[kind="primary"]:hover {
+    background-color: #777777 !important;
+    border-color: #777777 !important;
+}
+/* slider thumb and track */
+div[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+    background-color: #888888 !important;
+    border-color: #888888 !important;
+}
+div[data-testid="stSlider"] [data-baseweb="slider"] div[class*="Track"] > div {
+    background-color: #888888 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("Adversarial Autoregressive Feedback")
 st.caption(
     "A language model writes a story — but every few words, "
@@ -212,7 +235,7 @@ st.divider()
 # ── Controls ──────────────────────────────────────────────────────────────────
 prompt = st.text_area(
     "Starting prompt",
-    value="riverrun, past Eve and Adam's, from swerve of shore to bend of bay",
+    value="From swerve of shore to bend of bay",
     height=100,
 )
 
@@ -274,7 +297,6 @@ if run_button:
 
     st.divider()
     output_box = st.empty()
-    swaps_log = []
     context = prompt.strip()
     words_generated = 0
 
@@ -322,7 +344,7 @@ if run_button:
                     f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{last_word}</rt></ruby>'
                 )
                 context += " " + swapped
-                swaps_log.append((last_word, swapped, words_generated))
+
             else:
                 display_parts.append(last_word)
                 context += " " + last_word
@@ -336,24 +358,3 @@ if run_button:
         st.error(f"Generation error: {e}")
 
     progress.empty()
-    st.divider()
-
-    if swaps_log:
-        st.subheader(f"Swaps made: {len(swaps_log)}")
-        rows = ""
-        for original, swapped, pos in swaps_log:
-            rows += (
-                f"<tr><td style='padding:4px 12px'>~{pos}</td>"
-                f"<td style='padding:4px 12px'>{original}</td>"
-                f"<td style='padding:4px 12px; color:#888888; font-style:italic'>{swapped}</td></tr>"
-            )
-        st.markdown(
-            f"<table><thead><tr>"
-            f"<th style='padding:4px 12px'>Position</th>"
-            f"<th style='padding:4px 12px'>Original</th>"
-            f"<th style='padding:4px 12px'>Swapped to</th>"
-            f"</tr></thead><tbody>{rows}</tbody></table>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.info("No swaps were made — no close edit-distance matches found for those words.")
