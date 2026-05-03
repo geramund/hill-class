@@ -212,7 +212,7 @@ st.divider()
 # ── Controls ──────────────────────────────────────────────────────────────────
 prompt = st.text_area(
     "Starting prompt",
-    value="The lighthouse keeper had not slept in three days.",
+    value="riverrun, past Eve and Adam's, from swerve of shore to bend of bay",
     height=100,
 )
 
@@ -284,7 +284,7 @@ if run_button:
     def render():
         html = (
             '<p style="font-family: Georgia, serif; font-size: 17px; '
-            'line-height: 2.8; word-wrap: break-word; color: #1a1a1a;">'
+            'line-height: 2.8; word-wrap: break-word; color: #ffffff;">'
             + " ".join(display_parts)
             + "</p>"
         )
