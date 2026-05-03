@@ -203,7 +203,7 @@ with st.expander("How does it work?"):
         3. The model sees the swapped word as if it wrote it, then continues from there.
         4. Over time, meaning drifts — sometimes subtly, sometimes dramatically.
 
-        **Red words** = swapped substitutions &nbsp;|&nbsp; **Blue words** = nudges (injected when the model gets stuck)
+        **Gray italic words** = swapped substitutions (original shown above) &nbsp;|&nbsp; **Dimmed words** = nudges (injected when the model gets stuck)
         """
     )
 
@@ -284,7 +284,7 @@ if run_button:
     def render():
         html = (
             '<p style="font-family: Georgia, serif; font-size: 17px; '
-            'line-height: 2.2; word-wrap: break-word;">'
+            'line-height: 2.8; word-wrap: break-word; color: #1a1a1a;">'
             + " ".join(display_parts)
             + "</p>"
         )
@@ -302,7 +302,7 @@ if run_button:
             if not words or len(words) < 2:
                 nudge = random.choice(NUDGES)
                 display_parts.append(
-                    f'<span style="color:#4a9eff">{nudge}</span>'
+                    f'<span style="color:#777777">{nudge}</span>'
                 )
                 context += " " + nudge
                 render()
@@ -318,7 +318,8 @@ if run_button:
 
             if swapped != last_word:
                 display_parts.append(
-                    f'<span style="color:#ff4444; font-weight:bold">[{swapped}]</span>'
+                    f'<ruby style="color:#888888; font-style:italic">{swapped}'
+                    f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{last_word}</rt></ruby>'
                 )
                 context += " " + swapped
                 swaps_log.append((last_word, swapped, words_generated))
@@ -344,7 +345,7 @@ if run_button:
             rows += (
                 f"<tr><td style='padding:4px 12px'>~{pos}</td>"
                 f"<td style='padding:4px 12px'>{original}</td>"
-                f"<td style='padding:4px 12px; color:#ff4444; font-weight:bold'>{swapped}</td></tr>"
+                f"<td style='padding:4px 12px; color:#888888; font-style:italic'>{swapped}</td></tr>"
             )
         st.markdown(
             f"<table><thead><tr>"
