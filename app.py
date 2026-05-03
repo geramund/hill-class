@@ -317,7 +317,7 @@ if run_button:
     def render():
         html = (
             '<p style="font-family: Georgia, serif; font-size: 17px; '
-            'line-height: 2.8; word-wrap: break-word; color: #ffffff;">'
+            'line-height: 2.8; word-wrap: break-word; color: #000000;">'
             + " ".join(display_parts)
             + "</p>"
         )
