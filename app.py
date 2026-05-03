@@ -290,7 +290,7 @@ is_running = st.session_state.gen_state == "running"
 # ── Controls ──────────────────────────────────────────────────────────────────
 prompt = st.text_area(
     "Starting prompt",
-    value="The lighthouse keeper had not slept in three days.",
+    value="From swerve of shore to bend of bay",
     height=100,
     disabled=is_running,
 )
@@ -379,9 +379,20 @@ if st.session_state.gen_state != "idle":
     render()
 
     # Download button always visible once generation has started
+    ss = st.session_state
+    export_text = (
+        f"=== Settings ===\n"
+        f"Swap mode:          {ss.swap_mode_val}\n"
+        f"Temperature:        {ss.temperature_val}\n"
+        f"Words to generate:  {ss.total_words_val}\n"
+        f"Words before swap:  {ss.swap_every_val}\n"
+        f"System prompt:      {ss.system_prompt_val}\n"
+        f"\n=== Story ===\n"
+        f"{ss.plain_text}\n"
+    )
     st.download_button(
         "Save as text",
-        data=st.session_state.plain_text,
+        data=export_text,
         file_name="story.txt",
         mime="text/plain",
         use_container_width=True,
