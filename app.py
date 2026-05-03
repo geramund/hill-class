@@ -189,6 +189,10 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+/* override Streamlit's primary accent (drives slider fill, thumb, value label) */
+:root {
+    --primary-color: #888888 !important;
+}
 /* primary button */
 div.stButton > button[kind="primary"] {
     background-color: #555555 !important;
@@ -199,13 +203,20 @@ div.stButton > button[kind="primary"]:hover {
     background-color: #777777 !important;
     border-color: #777777 !important;
 }
-/* slider thumb and track */
-div[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+/* slider thumb */
+[data-testid="stSlider"] [role="slider"] {
     background-color: #888888 !important;
     border-color: #888888 !important;
+    box-shadow: #888888 0px 0px 0px 4px !important;
 }
-div[data-testid="stSlider"] [data-baseweb="slider"] div[class*="Track"] > div {
+/* slider filled track */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="presentation"] > div > div {
     background-color: #888888 !important;
+}
+/* slider value label above thumb */
+[data-testid="stSlider"] [data-baseweb="slider"] div[class*="value" i],
+[data-testid="stSlider"] [data-baseweb="slider"] div[class*="Value"] {
+    color: #aaaaaa !important;
 }
 </style>
 """, unsafe_allow_html=True)
