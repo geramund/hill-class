@@ -170,12 +170,6 @@ def get_stem(w):
     w = re.sub(r'[^a-zA-Z]', '', w).lower()
     return w[:5] if len(w) >= 5 else w
 
-MODELS = {
-    "Llama 3.1 8B (fast)":   "llama-3.1-8b-instant",
-    "Llama 3.3 70B":          "llama-3.3-70b-versatile",
-    "Qwen3 32B":              "qwen/qwen3-32b",
-}
-
 DEFAULT_SYSTEM_PROMPT = (
     "You are a text continuation engine. Continue the text naturally "
     "with normal English words separated by spaces. Never merge words "
@@ -183,9 +177,9 @@ DEFAULT_SYSTEM_PROMPT = (
     "words of the story."
 )
 
-def generate_n_words(context, n_words, temperature, client, system_prompt, model):
+def generate_n_words(context, n_words, temperature, client, system_prompt):
     completion = client.chat.completions.create(
-        model=model,
+        model="llama-3.1-8b-instant",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": f"Continue with the next {n_words} words:\n\n{context}"},
@@ -294,7 +288,6 @@ _defaults = {
     "swap_every_val":   6,
     "system_prompt_val": DEFAULT_SYSTEM_PROMPT,
     "swap_mode_val":    "Visual similarity",
-    "model_val":        "Llama 3.1 8B (fast)",
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -351,12 +344,6 @@ swap_mode = st.radio(
     disabled=is_running,
 )
 
-model_label = st.selectbox(
-    "Model",
-    list(MODELS.keys()),
-    disabled=is_running,
-)
-
 run_button = st.button(
     "Generate", type="primary", use_container_width=True, disabled=is_running,
 )
@@ -381,7 +368,6 @@ if run_button:
     st.session_state.swap_every_val   = swap_every
     st.session_state.system_prompt_val = system_prompt
     st.session_state.swap_mode_val    = swap_mode
-    st.session_state.model_val        = model_label
     st.rerun()
 
 # ── Generation display ────────────────────────────────────────────────────────
@@ -404,7 +390,6 @@ if st.session_state.gen_state != "idle":
     ss = st.session_state
     export_text = (
         f"=== Settings ===\n"
-        f"Model:              {ss.model_val}\n"
         f"Swap mode:          {ss.swap_mode_val}\n"
         f"Temperature:        {ss.temperature_val}\n"
         f"Words to generate:  {ss.total_words_val}\n"
@@ -470,7 +455,6 @@ if st.session_state.gen_state != "idle":
                     st.session_state.temperature_val,
                     client,
                     st.session_state.system_prompt_val,
-                    MODELS[st.session_state.model_val],
                 )
                 words = chunk.split()
 
