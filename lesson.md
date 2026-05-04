@@ -53,6 +53,14 @@ This loop is called **autoregressive generation**. Each generated token becomes 
 
 **Temperature** scales the probability distribution before sampling. At low temperature, the distribution is sharper and the model almost always selects the highest-probability token. At high temperature, the distribution is flatter and lower-probability tokens are sampled more often.
 
+### The system prompt
+
+Most deployed language models receive two inputs, not one. The first is the **system prompt**: a block of text prepended to the conversation that instructs the model on how to behave — its role, constraints, tone, or task. The second is the **user prompt**: the actual input from the person using the model.
+
+Both are passed to the model as tokens in the same context window. The model does not process them differently at a computational level — the system prompt is simply text that appears first, before the user's input. Its influence comes from position and content, not from any special mechanism. Instructions given in the system prompt shape the probability distribution over subsequent tokens because the training process has taught the model to treat text in that position as directive.
+
+In this tool, the system prompt tells the model it is a text continuation engine and instructs it not to repeat phrases. You can edit it to change the genre, register, or language of the output — the model will adjust because those instructions become part of the context it is predicting from.
+
 ---
 
 ## Part 3: The Experiment
