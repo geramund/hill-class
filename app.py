@@ -310,7 +310,7 @@ with tab_gen:
     # ── Controls ─────────────────────────────────────────────────────────────
     prompt = st.text_area(
         "Starting prompt",
-        value="The lighthouse keeper had not slept in three days.",
+        value="From swerve of shore to bend of bay",
         height=100,
         disabled=is_running,
     )
