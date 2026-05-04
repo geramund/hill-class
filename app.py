@@ -68,10 +68,6 @@ ADJECTIVES = [
     "still", "slow", "fast", "hard", "soft", "bright", "high", "low",
     "deep", "close", "open", "real", "black", "white", "heavy", "empty",
     "pale", "thin", "wide", "hollow", "broken", "worn", "bare", "sharp",
-    "silent", "distant", "sudden", "strange", "familiar", "lost", "hidden",
-    "gentle", "violent", "bitter", "sweet", "faint", "dense", "ancient",
-    "narrow", "vast", "raw", "clean", "cloudy", "steady", "restless",
-    "tired", "hungry", "frightened", "lonely", "curious", "furious", "numb",
 ]
 
 VERBS = [
@@ -79,10 +75,6 @@ VERBS = [
     "hold", "keep", "find", "lose", "give", "take", "make", "leave", "stay",
     "begin", "end", "think", "feel", "watch", "break", "stand", "wait",
     "search", "call", "open", "reach", "follow", "hide", "pass", "pull",
-    "carry", "drop", "climb", "drift", "sink", "burn", "freeze", "shake",
-    "whisper", "shout", "cry", "laugh", "dream", "forget", "remember", "know",
-    "enter", "escape", "return", "vanish", "appear", "gather", "scatter", "press",
-    "grasp", "release", "strike", "catch", "throw", "push", "kneel", "crawl",
 ]
 
 NUDGES = [
@@ -335,7 +327,7 @@ with col3:
 
 swap_mode = st.radio(
     "Swap mode",
-    ["Visual similarity", "Noun swap", "Adjective swap", "Verb swap"],
+    ["Visual similarity", "Random noun", "Random adjective", "Random verb"],
     horizontal=True,
     help=(
         "Visual similarity: swap with a look-alike word. "
@@ -490,9 +482,9 @@ if st.session_state.gen_state != "idle":
 
                     else:
                         pos_map = {
-                            "Noun swap":      ("NN", NOUNS),
-                            "Adjective swap": ("JJ", ADJECTIVES),
-                            "Verb swap":      ("VB", VERBS),
+                            "Random noun":      ("NN", NOUNS),
+                            "Random adjective": ("JJ", ADJECTIVES),
+                            "Random verb":      ("VB", VERBS),
                         }
                         prefix, repl_list = pos_map[mode]
                         swap_idx, original, replacement = pos_swap(words, prefix, repl_list)
