@@ -259,265 +259,276 @@ st.caption(
     "Watch meaning drift."
 )
 
-with st.expander("How does it work?"):
-    st.markdown(
-        """
-        1. The model generates text in small chunks.
-        2. At the end of each chunk, a word is silently replaced according to the swap mode.
-        3. The model sees the swapped word as if it wrote it, then continues from there.
-        4. Over time, meaning drifts — sometimes subtly, sometimes dramatically.
-        5. Use **Pause / Inject** to stop at any time and add your own words before the model continues.
+tab_gen, tab_lesson = st.tabs(["Generator", "Lesson Plan"])
 
-        **Gray italic words** = swapped substitutions (original shown above in small text) &nbsp;|&nbsp;
-        **Dimmed words** = nudges &nbsp;|&nbsp;
-        *Dark italic words* = your injections
-        """
-    )
+with tab_lesson:
+    try:
+        lesson_path = os.path.join(os.path.dirname(__file__), "lesson.md")
+        with open(lesson_path, "r", encoding="utf-8") as f:
+            st.markdown(f.read())
+    except FileNotFoundError:
+        st.warning("lesson.md not found in the project folder.")
 
-st.divider()
+with tab_gen:
 
-# ── Session state init ────────────────────────────────────────────────────────
-_defaults = {
-    "gen_state":        "idle",   # idle | running | paused | done
-    "context":          "",
-    "display_parts":    [],
-    "plain_text":       "",
-    "words_generated":  0,
-    "temperature_val":  0.7,
-    "total_words_val":  150,
-    "swap_every_val":   6,
-    "system_prompt_val": DEFAULT_SYSTEM_PROMPT,
-    "swap_mode_val":    "Visual similarity",
-}
-for k, v in _defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+    with st.expander("How does it work?"):
+        st.markdown(
+            """
+            1. The model generates text in small chunks.
+            2. At the end of each chunk, a word is silently replaced according to the swap mode.
+            3. The model sees the swapped word as if it wrote it, then continues from there.
+            4. Over time, meaning drifts — sometimes subtly, sometimes dramatically.
+            5. Use **Pause / Inject** to stop at any time and add your own words before the model continues.
 
-is_running = st.session_state.gen_state == "running"
+            **Gray italic words** = swapped substitutions (original shown above in small text) &nbsp;|&nbsp;
+            **Dimmed words** = nudges &nbsp;|&nbsp;
+            *Dark italic words* = your injections
+            """
+        )
 
-# ── Controls ──────────────────────────────────────────────────────────────────
-prompt = st.text_area(
-    "Starting prompt",
-    value="From swerve of shore to bend of bay",
-    height=100,
-    disabled=is_running,
-)
-
-with st.expander("Edit system prompt"):
-    system_prompt = st.text_area(
-        "System prompt",
-        value=DEFAULT_SYSTEM_PROMPT,
-        height=120,
-        label_visibility="collapsed",
-        help="Instructions given to the model. Try changing genre, voice, or language.",
-        disabled=is_running,
-    )
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    temperature = st.slider(
-        "Temperature", min_value=0.1, max_value=1.5, value=0.7, step=0.1,
-        help="Higher = more unpredictable. Lower = more controlled.",
-        disabled=is_running,
-    )
-with col2:
-    total_words = st.slider(
-        "Words to generate", min_value=50, max_value=400, value=150, step=25,
-        help="Total words the model will write.",
-        disabled=is_running,
-    )
-with col3:
-    swap_every = st.slider(
-        "Words before each swap", min_value=2, max_value=20, value=6, step=1,
-        help="Lower = more frequent disruption.",
-        disabled=is_running,
-    )
-
-swap_mode = st.radio(
-    "Swap mode",
-    ["Visual similarity", "Noun swap", "Adjective swap", "Verb swap"],
-    horizontal=True,
-    help=(
-        "Visual similarity: swap with a look-alike word. "
-        "Noun/Adjective/Verb: replace the last word of that type with a random one."
-    ),
-    disabled=is_running,
-)
-
-run_button = st.button(
-    "Generate", type="primary", use_container_width=True, disabled=is_running,
-)
-
-# ── Kick off generation ───────────────────────────────────────────────────────
-if run_button:
-    client = get_client()
-    if client is None:
-        st.error("API key not configured — please contact your instructor.")
-        st.stop()
-    if not prompt.strip():
-        st.warning("Please enter a starting prompt.")
-        st.stop()
-
-    st.session_state.gen_state        = "running"
-    st.session_state.context          = prompt.strip()
-    st.session_state.display_parts    = [f'<span style="color:#999999">{prompt.strip()}</span>']
-    st.session_state.plain_text       = prompt.strip()
-    st.session_state.words_generated  = 0
-    st.session_state.temperature_val  = temperature
-    st.session_state.total_words_val  = total_words
-    st.session_state.swap_every_val   = swap_every
-    st.session_state.system_prompt_val = system_prompt
-    st.session_state.swap_mode_val    = swap_mode
-    st.rerun()
-
-# ── Generation display ────────────────────────────────────────────────────────
-if st.session_state.gen_state != "idle":
     st.divider()
-    output_box = st.empty()
 
-    def render():
-        html = (
-            '<p style="font-family: Georgia, serif; font-size: 17px; '
-            'line-height: 2.8; word-wrap: break-word; color: #000000;">'
-            + " ".join(st.session_state.display_parts)
-            + "</p>"
-        )
-        output_box.markdown(html, unsafe_allow_html=True)
+    # ── Session state init ────────────────────────────────────────────────────
+    _defaults = {
+        "gen_state":         "idle",
+        "context":           "",
+        "display_parts":     [],
+        "plain_text":        "",
+        "words_generated":   0,
+        "temperature_val":   0.7,
+        "total_words_val":   150,
+        "swap_every_val":    6,
+        "system_prompt_val": DEFAULT_SYSTEM_PROMPT,
+        "swap_mode_val":     "Visual similarity",
+    }
+    for k, v in _defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
-    render()
+    is_running = st.session_state.gen_state == "running"
 
-    # Download button always visible once generation has started
-    ss = st.session_state
-    export_text = (
-        f"=== Settings ===\n"
-        f"Swap mode:          {ss.swap_mode_val}\n"
-        f"Temperature:        {ss.temperature_val}\n"
-        f"Words to generate:  {ss.total_words_val}\n"
-        f"Words before swap:  {ss.swap_every_val}\n"
-        f"System prompt:      {ss.system_prompt_val}\n"
-        f"\n=== Story ===\n"
-        f"{ss.plain_text}\n"
-    )
-    st.download_button(
-        "Save as text",
-        data=export_text,
-        file_name="story.txt",
-        mime="text/plain",
-        use_container_width=True,
+    # ── Controls ─────────────────────────────────────────────────────────────
+    prompt = st.text_area(
+        "Starting prompt",
+        value="The lighthouse keeper had not slept in three days.",
+        height=100,
+        disabled=is_running,
     )
 
-    # ── Paused: inject UI ─────────────────────────────────────────────────────
-    if st.session_state.gen_state == "paused":
-        inject_text = st.text_input(
-            "inject",
-            key="inject_input",
-            placeholder="Type your continuation here, then click Continue…",
+    with st.expander("Edit system prompt"):
+        system_prompt = st.text_area(
+            "System prompt",
+            value=DEFAULT_SYSTEM_PROMPT,
+            height=120,
             label_visibility="collapsed",
+            help="Instructions given to the model. Try changing genre, voice, or language.",
+            disabled=is_running,
         )
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("Continue", use_container_width=True, type="primary"):
-                if inject_text.strip():
-                    st.session_state.display_parts.append(
-                        f'<span style="color:#444444; font-style:italic">{inject_text.strip()}</span>'
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        temperature = st.slider(
+            "Temperature", min_value=0.1, max_value=1.5, value=0.7, step=0.1,
+            help="Higher = more unpredictable. Lower = more controlled.",
+            disabled=is_running,
+        )
+    with col2:
+        total_words = st.slider(
+            "Words to generate", min_value=50, max_value=400, value=150, step=25,
+            help="Total words the model will write.",
+            disabled=is_running,
+        )
+    with col3:
+        swap_every = st.slider(
+            "Words before each swap", min_value=2, max_value=20, value=6, step=1,
+            help="Lower = more frequent disruption.",
+            disabled=is_running,
+        )
+
+    swap_mode = st.radio(
+        "Swap mode",
+        ["Visual similarity", "Noun swap", "Adjective swap", "Verb swap"],
+        horizontal=True,
+        help=(
+            "Visual similarity: swap with a look-alike word. "
+            "Noun/Adjective/Verb: replace the last word of that type with a random one."
+        ),
+        disabled=is_running,
+    )
+
+    run_button = st.button(
+        "Generate", type="primary", use_container_width=True, disabled=is_running,
+    )
+
+    # ── Kick off generation ───────────────────────────────────────────────────
+    if run_button:
+        client = get_client()
+        if client is None:
+            st.error("API key not configured — please contact your instructor.")
+            st.stop()
+        if not prompt.strip():
+            st.warning("Please enter a starting prompt.")
+            st.stop()
+
+        st.session_state.gen_state         = "running"
+        st.session_state.context           = prompt.strip()
+        st.session_state.display_parts     = [f'<span style="color:#999999">{prompt.strip()}</span>']
+        st.session_state.plain_text        = prompt.strip()
+        st.session_state.words_generated   = 0
+        st.session_state.temperature_val   = temperature
+        st.session_state.total_words_val   = total_words
+        st.session_state.swap_every_val    = swap_every
+        st.session_state.system_prompt_val = system_prompt
+        st.session_state.swap_mode_val     = swap_mode
+        st.rerun()
+
+    # ── Generation display ────────────────────────────────────────────────────
+    if st.session_state.gen_state != "idle":
+        st.divider()
+        output_box = st.empty()
+
+        def render():
+            html = (
+                '<p style="font-family: Georgia, serif; font-size: 17px; '
+                'line-height: 2.8; word-wrap: break-word; color: #000000;">'
+                + " ".join(st.session_state.display_parts)
+                + "</p>"
+            )
+            output_box.markdown(html, unsafe_allow_html=True)
+
+        render()
+
+        ss = st.session_state
+        export_text = (
+            f"=== Settings ===\n"
+            f"Swap mode:          {ss.swap_mode_val}\n"
+            f"Temperature:        {ss.temperature_val}\n"
+            f"Words to generate:  {ss.total_words_val}\n"
+            f"Words before swap:  {ss.swap_every_val}\n"
+            f"System prompt:      {ss.system_prompt_val}\n"
+            f"\n=== Story ===\n"
+            f"{ss.plain_text}\n"
+        )
+        st.download_button(
+            "Save as text",
+            data=export_text,
+            file_name="story.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+
+        # ── Paused: inject UI ─────────────────────────────────────────────────
+        if st.session_state.gen_state == "paused":
+            inject_text = st.text_input(
+                "inject",
+                key="inject_input",
+                placeholder="Type your continuation here, then click Continue…",
+                label_visibility="collapsed",
+            )
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("Continue", use_container_width=True, type="primary"):
+                    if inject_text.strip():
+                        st.session_state.display_parts.append(
+                            f'<span style="color:#444444; font-style:italic">{inject_text.strip()}</span>'
+                        )
+                        st.session_state.context    += " " + inject_text.strip()
+                        st.session_state.plain_text += " " + inject_text.strip()
+                    st.session_state.gen_state = "running"
+                    st.rerun()
+            with c2:
+                if st.button("Stop", use_container_width=True):
+                    st.session_state.gen_state = "done"
+                    st.rerun()
+
+        # ── Running: generate next chunk ──────────────────────────────────────
+        elif st.session_state.gen_state == "running":
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("Pause / Inject", use_container_width=True):
+                    st.session_state.gen_state = "paused"
+                    st.rerun()
+            with c2:
+                if st.button("Stop", use_container_width=True, key="stop_running"):
+                    st.session_state.gen_state = "done"
+                    st.rerun()
+
+            wg    = st.session_state.words_generated
+            total = st.session_state.total_words_val
+
+            if wg < total:
+                st.progress(min(wg / total, 1.0), text=f"{wg} / {total} words")
+                client = get_client()
+                try:
+                    chunk = generate_n_words(
+                        st.session_state.context,
+                        st.session_state.swap_every_val,
+                        st.session_state.temperature_val,
+                        client,
+                        st.session_state.system_prompt_val,
                     )
-                    st.session_state.context    += " " + inject_text.strip()
-                    st.session_state.plain_text += " " + inject_text.strip()
-                st.session_state.gen_state = "running"
-                st.rerun()
-        with c2:
-            if st.button("Stop", use_container_width=True):
-                st.session_state.gen_state = "done"
-                st.rerun()
+                    words = chunk.split()
 
-    # ── Running: generate next chunk ─────────────────────────────────────────
-    elif st.session_state.gen_state == "running":
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("Pause / Inject", use_container_width=True):
-                st.session_state.gen_state = "paused"
-                st.rerun()
-        with c2:
-            if st.button("Stop", use_container_width=True, key="stop_running"):
-                st.session_state.gen_state = "done"
-                st.rerun()
-
-        wg    = st.session_state.words_generated
-        total = st.session_state.total_words_val
-
-        if wg < total:
-            st.progress(min(wg / total, 1.0), text=f"{wg} / {total} words")
-            client = get_client()
-            try:
-                chunk = generate_n_words(
-                    st.session_state.context,
-                    st.session_state.swap_every_val,
-                    st.session_state.temperature_val,
-                    client,
-                    st.session_state.system_prompt_val,
-                )
-                words = chunk.split()
-
-                if not words or len(words) < 2:
-                    nudge = random.choice(NUDGES)
-                    st.session_state.display_parts.append(
-                        f'<span style="color:#777777">{nudge}</span>'
-                    )
-                    st.session_state.context    += " " + nudge
-                    st.session_state.plain_text += " " + nudge
-                else:
-                    mode = st.session_state.swap_mode_val
-
-                    if mode == "Visual similarity":
-                        for word in words[:-1]:
-                            st.session_state.display_parts.append(word)
-                            st.session_state.context    += " " + word
-                            st.session_state.plain_text += " " + word
-
-                        last_word = words[-1]
-                        swapped   = visual_swap(last_word)
-                        if swapped != last_word:
-                            st.session_state.display_parts.append(
-                                f'<ruby style="color:#888888; font-style:italic">{swapped}'
-                                f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{last_word}</rt></ruby>'
-                            )
-                            st.session_state.context    += " " + swapped
-                            st.session_state.plain_text += f" [{last_word}→{swapped}]"
-                        else:
-                            st.session_state.display_parts.append(last_word)
-                            st.session_state.context    += " " + last_word
-                            st.session_state.plain_text += " " + last_word
-
+                    if not words or len(words) < 2:
+                        nudge = random.choice(NUDGES)
+                        st.session_state.display_parts.append(
+                            f'<span style="color:#777777">{nudge}</span>'
+                        )
+                        st.session_state.context    += " " + nudge
+                        st.session_state.plain_text += " " + nudge
                     else:
-                        pos_map = {
-                            "Noun swap":      ("NN", NOUNS),
-                            "Adjective swap": ("JJ", ADJECTIVES),
-                            "Verb swap":      ("VB", VERBS),
-                        }
-                        prefix, repl_list = pos_map[mode]
-                        swap_idx, original, replacement = pos_swap(words, prefix, repl_list)
+                        mode = st.session_state.swap_mode_val
 
-                        for i, word in enumerate(words):
-                            if i == swap_idx and swap_idx is not None:
-                                st.session_state.display_parts.append(
-                                    f'<ruby style="color:#888888; font-style:italic">{replacement}'
-                                    f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{original}</rt></ruby>'
-                                )
-                                st.session_state.context    += " " + replacement
-                                st.session_state.plain_text += f" [{original}→{replacement}]"
-                            else:
+                        if mode == "Visual similarity":
+                            for word in words[:-1]:
                                 st.session_state.display_parts.append(word)
                                 st.session_state.context    += " " + word
                                 st.session_state.plain_text += " " + word
 
-                    st.session_state.words_generated += len(words)
+                            last_word = words[-1]
+                            swapped   = visual_swap(last_word)
+                            if swapped != last_word:
+                                st.session_state.display_parts.append(
+                                    f'<ruby style="color:#888888; font-style:italic">{swapped}'
+                                    f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{last_word}</rt></ruby>'
+                                )
+                                st.session_state.context    += " " + swapped
+                                st.session_state.plain_text += f" [{last_word}→{swapped}]"
+                            else:
+                                st.session_state.display_parts.append(last_word)
+                                st.session_state.context    += " " + last_word
+                                st.session_state.plain_text += " " + last_word
 
-                render()
-                st.rerun()
+                        else:
+                            pos_map = {
+                                "Noun swap":      ("NN", NOUNS),
+                                "Adjective swap": ("JJ", ADJECTIVES),
+                                "Verb swap":      ("VB", VERBS),
+                            }
+                            prefix, repl_list = pos_map[mode]
+                            swap_idx, original, replacement = pos_swap(words, prefix, repl_list)
 
-            except Exception as e:
-                st.error(f"Generation error: {e}")
+                            for i, word in enumerate(words):
+                                if i == swap_idx and swap_idx is not None:
+                                    st.session_state.display_parts.append(
+                                        f'<ruby style="color:#888888; font-style:italic">{replacement}'
+                                        f'<rt style="font-size:0.65em; color:#aaaaaa; font-style:normal">{original}</rt></ruby>'
+                                    )
+                                    st.session_state.context    += " " + replacement
+                                    st.session_state.plain_text += f" [{original}→{replacement}]"
+                                else:
+                                    st.session_state.display_parts.append(word)
+                                    st.session_state.context    += " " + word
+                                    st.session_state.plain_text += " " + word
+
+                        st.session_state.words_generated += len(words)
+
+                    render()
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"Generation error: {e}")
+                    st.session_state.gen_state = "done"
+            else:
                 st.session_state.gen_state = "done"
-        else:
-            st.session_state.gen_state = "done"
-            st.rerun()
+                st.rerun()
